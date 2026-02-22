@@ -221,7 +221,7 @@ def load_csv_data():
 @st.cache_data(show_spinner="Booting up the Anti-Meta Engine (Parsing millions of rows)...")
 def load_anti_meta_engine():
     try:
-        dataset = pd.read_csv('20231106.csv', header=None)
+        dataset = pd.read_csv('20231106.zip', header=None)
         column_names = [
             "temp1", "temp2", "id1", "Trophies1", "Crowns1",
             "Card1-1", "Card1-2", "Card1-3", "Card1-4", "Card1-5", "Card1-6", "Card1-7", "Card1-8",
