@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clash Royale Card Analytics</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <style>
+        /* 1. Custom Font */
+        @font-face {
+            font-family: 'ClashFont';
+            src: url('Clash_Regular.otf') format('opentype');
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'ClashFont', Arial, sans-serif;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 2. Blurred Background */
+        .bg-blur {
+            position: fixed;
+            top: -5%; /* Slightly larger to hide blurred edges */
+            left: -5%;
+            width: 110vw;
+            height: 110vh;
+            background: url('foranalytics.jpg') no-repeat center center;
+            background-size: cover;
+            filter: blur(2px) brightness(0.4);
+            z-index: -1;
+            pointer-events: none; /* Ensures it doesn't block clicks */
+        }
+
+        /* 3. Main Container & UI Styling */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        h1 {
+            text-align: center;
+            text-shadow: 3px 3px 0 #000;
+            font-size: 42px;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+        
+        .instruction {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px #000;
+            color: #a9a9a9;
+        }
+
+        /* 4. Two-Column Flexbox Layout - EQUAL WIDTH & HEIGHT */
+        .main-layout {
+            display: flex;
+            gap: 30px;
+            align-items: stretch;
+        }
+
+        /* LEFT COLUMN: Selection Grid */
+        .left-col {
+            flex: 1; /* 50% width */
+            background: rgba(0, 34, 68, 0.7);
+            border: 2px solid #5a9bd4;
+            border-radius: 12px;
+            padding: 20px;
+            height: 75vh; 
+            overflow-y: auto;
+            box-sizing: border-box;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+            
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+            gap: 15px;
+            align-content: flex-start;
+        }
+
+        /* RIGHT COLUMN: Analytics Panel */
+        .right-col {
+            flex: 1; /* 50% width */
+        }
+
+        .panel {
+            background: rgba(20, 30, 48, 0.85);
+            border: 2px solid #ffd700;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+            height: 75vh; 
+            overflow-y: auto;
+            box-sizing: border-box;
+            margin: 0;
+        }
+
+        /* Custom Scrollbars */
+        .left-col::-webkit-scrollbar, .panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        .left-col::-webkit-scrollbar-track, .panel::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        .left-col::-webkit-scrollbar-thumb, .panel::-webkit-scrollbar-thumb {
+            background: #5a9bd4;
+            border-radius: 10px;
+        }
+        .panel::-webkit-scrollbar-thumb {
+            background: #ffd700; 
+        }
+
+        .selectable-card {
+            width: 100%;
+            cursor: pointer;
+            transition: transform 0.2s, filter 0.2s;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+        }
+
+        .selectable-card:hover {
+            transform: scale(1.15) translateY(-5px);
+            filter: drop-shadow(0 6px 10px rgba(255, 215, 0, 0.6));
+        }
+
+        .selectable-card img {
+            width: 100%;
+            aspect-ratio: 3/4; 
+            object-fit: cover;
+            border-radius: 6px;
+            display: block;
+        }
+
+        .placeholder-panel {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #a9a9a9;
+            font-size: 24px;
+            text-align: center;
+            text-shadow: 2px 2px #000;
+        }
+
+        .flex-row {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+
+        .card-main-img {
+            max-width: 160px;
+            aspect-ratio: 3/4;
+            object-fit: cover;
+            filter: drop-shadow(0 0 10px rgba(0,0,0,0.8));
+        }
+
+        .stats h2 {
+            margin: 0 0 10px 0;
+            font-size: 38px;
+            text-shadow: 2px 2px #000;
+            color: #ffd700;
+        }
+
+        .win-rate {
+            font-size: 28px;
+            color: lightgreen;
+            text-shadow: 1px 1px #000;
+        }
+
+        .section-title {
+            font-size: 24px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px #000;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding-bottom: 5px;
+        }
+
+        .card-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 15px;
+    grid-auto-rows: 1fr;   /* 🔥 equal row height */
+}
+
+.card-mini {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.card-mini img {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.8);
+    display: block;
+    background-color: rgba(0,0,0,0.3);
+}
+
+.card-mini span {
+    font-size: 14px;
+    display: block;
+    margin-top: 5px;
+    width: 100%;
+    height: 18px;              /* 🔥 fixed text height */
+    line-height: 18px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+    </style>
+</head>
+<body>
+
+    <div class="bg-blur"></div>
+
+    <div class="container">
+        <h1>📊 Card Analytics Dashboard</h1>
+        <div class="instruction">Tap any card below to view its advanced analytics</div>
+
+        <div class="main-layout">
+            
+            <div id="card-selection-grid" class="left-col">
+                </div>
+
+            <div class="right-col">
+                <div id="placeholder-panel" class="panel placeholder-panel">
+                    Select a card from the left<br>to view its statistics, synergies, and counters.
+                </div>
+
+                <div id="analytics-panel" class="panel" style="display: none;">
+                    <div class="flex-row">
+                        <img id="main-card-img" class="card-main-img" src="" alt="Card Image">
+                        <div class="stats">
+                            <h2 id="card-name-title">Card Name</h2>
+                            <div class="win-rate">Win Rate: <strong id="card-win-rate">--%</strong></div>
+                        </div>
+                    </div>
+
+                    <div class="section-title">🔥 Top 10 Synergies</div>
+                    <div id="synergy-grid" class="card-grid"></div>
+
+                    <div class="section-title">🛡️ Top 10 Hard Counters</div>
+                    <div id="counter-grid" class="card-grid"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let cardDict = {};
+        let idToName = {};
+        let winRatesData = {};
+        let analyticsData = {};
+
+        const RARITY_ORDER = {
+            "Champion": 1,
+            "Legendary": 2,
+            "Epic": 3,
+            "Rare": 4,
+            "Common": 5
+        };
+
+        const ALLOWED_IDS = [
+            26000048, 26000004, 28000001, 26000021, 26000063, 26000010, 28000011, 26000087, 26000009, 26000085, 
+            28000009, 26000055, 26000060, 26000000, 28000008, 26000018, 26000051, 27000003, 26000011, 26000044, 
+            26000036, 28000000, 28000015, 26000061, 26000032, 28000004, 26000057, 26000058, 26000040, 26000062, 
+            26000001, 26000026, 27000000, 27000006, 26000029, 26000030, 26000059, 26000049, 26000065, 26000034, 
+            26000056, 26000006, 26000052, 28000010, 26000083, 26000037, 27000012, 26000045, 26000080, 26000007, 
+            26000041, 26000033, 28000003, 26000014, 26000012, 26000017, 26000035, 26000064, 26000015, 26000042, 
+            27000007, 28000002, 26000002, 28000018, 26000020, 27000002, 27000001, 28000007, 27000004, 26000008, 
+            26000013, 26000074, 26000077, 28000005, 26000027, 28000012, 26000046, 28000006, 26000005, 26000038, 
+            26000024, 26000019, 26000043, 28000017, 27000013, 27000008, 26000039, 26000067, 26000022, 26000068, 
+            27000010, 26000023, 27000009, 28000014, 26000016, 26000053, 26000028, 26000084, 26000069, 26000050, 
+            26000003, 26000072, 26000025, 28000013, 26000054, 26000031, 26000047, 28000016, 27000005, 26000093
+        ];
+
+        async function fetchCardData() {
+            const res = await fetch("https://royaleapi.github.io/cr-api-data/json/cards_i18n.json");
+            const data = await res.json();
+            
+            let allowedCards = [];
+
+            data.forEach(card => {
+                if(ALLOWED_IDS.includes(card.id)) {
+                    cardDict[card.name] = { 
+                        key: card.key, 
+                        id: card.id,
+                        rarity: card.rarity ? card.rarity.charAt(0).toUpperCase() + card.rarity.slice(1) : 'Common'
+                    };
+                    idToName[card.id] = card.name;
+                    allowedCards.push(card.name);
+                }
+            });
+
+            allowedCards.sort((a, b) => {
+                const rarityA = RARITY_ORDER[cardDict[a].rarity] || 6;
+                const rarityB = RARITY_ORDER[cardDict[b].rarity] || 6;
+                if(rarityA !== rarityB) return rarityA - rarityB;
+                return a.localeCompare(b);
+            });
+
+            const grid = document.getElementById("card-selection-grid");
+            allowedCards.forEach(name => {
+                const cardDiv = document.createElement("div");
+                cardDiv.className = "selectable-card";
+                cardDiv.title = name;
+                
+                const img = document.createElement("img");
+                img.src = getImgUrl(name);
+                img.alt = name;
+                
+                cardDiv.appendChild(img);
+                cardDiv.addEventListener("click", () => renderAnalytics(name));
+                grid.appendChild(cardDiv);
+            });
+        }
+
+        function getImgUrl(name) {
+            if(!cardDict[name]) return "";
+            return `https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards/${cardDict[name].key}.png`;
+        }
+
+        function extractIds(str) {
+            if(!str) return [];
+            const matches = str.match(/\d{8}/g); 
+            return matches ? matches.map(Number) : [];
+        }
+
+        function loadCardCSVs() {
+            Papa.parse("card_win_rates(1).csv", {
+                download: true,
+                header: true,
+                complete: function(results) {
+                    results.data.forEach(row => {
+                        if(row.Card_ID && row.Win_Rate) {
+                            winRatesData[row.Card_ID] = parseFloat(row.Win_Rate).toFixed(1);
+                        }
+                    });
+                }
+            });
+
+            Papa.parse("card_analytics_df.csv", {
+                download: true,
+                header: true,
+                complete: function(results) {
+                    results.data.forEach(row => {
+                        if(row.Card_ID) {
+                            analyticsData[row.Card_ID] = {
+                                synergies: extractIds(row.Top_10_Synergies),
+                                counters: extractIds(row.Top_10_Counters)
+                            };
+                        }
+                    });
+                }
+            });
+        }
+
+        function renderAnalytics(cardName) {
+            const card = cardDict[cardName];
+            if(!card) return;
+
+            document.getElementById("placeholder-panel").style.display = "none";
+            document.getElementById("analytics-panel").style.display = "block";
+            document.querySelector('.right-col .panel').scrollTop = 0;
+
+            document.getElementById("card-name-title").textContent = cardName;
+            document.getElementById("main-card-img").src = getImgUrl(cardName);
+
+            const wr = winRatesData[card.id] || "N/A";
+            document.getElementById("card-win-rate").textContent = wr !== "N/A" ? `${wr}%` : wr;
+
+            const synContainer = document.getElementById("synergy-grid");
+            const counterContainer = document.getElementById("counter-grid");
+            synContainer.innerHTML = "";
+            counterContainer.innerHTML = "";
+
+            const data = analyticsData[card.id] || {synergies: [], counters: []};
+
+            data.synergies.slice(0, 10).forEach(id => {
+                const name = idToName[id];
+                if(name) {
+                    synContainer.innerHTML += `
+                        <div class="card-mini">
+                            <img src="${getImgUrl(name)}" alt="${name}">
+                            <span>${name}</span>
+                        </div>`;
+                }
+            });
+
+            data.counters.slice(0, 10).forEach(id => {
+                const name = idToName[id];
+                if(name) {
+                    counterContainer.innerHTML += `
+                        <div class="card-mini">
+                            <img src="${getImgUrl(name)}" alt="${name}">
+                            <span>${name}</span>
+                        </div>`;
+                }
+            });
+        }
+
+        async function init() {
+            await fetchCardData();
+            loadCardCSVs();
+        }
+
+        init();
+    </script>
+</body>
+</html>

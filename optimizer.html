@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clash Royale Deck Optimizer</title>
+
+    <style>
+      @font-face {
+        font-family: "ClashFont";
+        src: url("Clash_Regular.otf") format("opentype");
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "ClashFont", Arial, sans-serif;
+        color: white;
+        min-height: 100vh;
+        overflow-x: hidden;
+        background: url("newWallpaper1.jpg") no-repeat center center fixed;
+        background-size: cover;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: -1;
+      }
+
+      .bg-blur {
+        position: fixed;
+        top: -5%;
+        left: -5%;
+        width: 110vw;
+        height: 110vh;
+        background: url("foranalytics.jpg") no-repeat center center;
+        background-size: cover;
+        filter: blur(2px) brightness(0.4);
+        z-index: -1;
+        pointer-events: none;
+      }
+
+      .container {
+        max-width: 750px;
+        margin: 0 auto;
+        padding: 30px 20px;
+      }
+
+      h1 {
+        text-align: center;
+        text-shadow: 3px 3px 0 #000;
+        font-size: 42px;
+        color: #ffd700;
+        margin-bottom: 5px;
+      }
+
+      .status-msg {
+        text-align: center;
+        font-size: 18px;
+        margin-bottom: 25px;
+        text-shadow: 2px 2px #000;
+        color: #a9a9a9;
+      }
+
+      .deck-panel {
+        background: rgba(0, 34, 68, 0.7);
+        border: 2px solid #5a9bd4;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+        margin-bottom: 30px;
+      }
+
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 150px);
+        justify-content: space-evenly;
+        gap: 25px;
+      }
+
+      .card-slot {
+        width: 150px;
+        height: 210px;
+        background: rgba(20, 30, 48, 0.95);
+        border: 3px solid #ffd700;
+        border-radius: 14px;
+        padding: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.2s;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .card-slot:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+      }
+
+      .card-slot img {
+        width: 100%;
+        height: 170px;
+        object-fit: cover;
+        border-radius: 10px;
+      }
+
+      .card-slot span {
+        font-size: 13px;
+        margin-top: 4px;
+      }
+
+      .selection-panel {
+        background: rgba(0, 34, 68, 0.7);
+        border: 2px solid #5a9bd4;
+        border-radius: 12px;
+        padding: 20px;
+        height: 60vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+        gap: 15px;
+      }
+
+      .selection-card {
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          filter 0.2s;
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+      }
+
+      .selection-card:hover {
+        transform: scale(1.15) translateY(-5px);
+        filter: drop-shadow(0 6px 10px rgba(255, 215, 0, 0.6));
+      }
+
+      .selection-card img {
+        width: 100%;
+        aspect-ratio: 3/4;
+        border-radius: 6px;
+      }
+
+      .selection-card.selected {
+        transform: scale(0.95);
+        opacity: 0.4;
+        filter: grayscale(80%);
+        pointer-events: none;
+      }
+
+      .clash-btn {
+        display: block;
+        width: 100%;
+        max-width: 600px;
+        margin: 25px auto;
+        padding: 18px 20px;
+        font-family: "ClashFont", Arial, sans-serif;
+        font-size: 22px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: white;
+        background: linear-gradient(to bottom, #ffd54f 0%, #ffb300 100%);
+        border: 4px solid #ff9800;
+        border-radius: 20px;
+        box-shadow:
+          0 6px 0 #e65100,
+          0 10px 25px rgba(0, 0, 0, 0.5);
+        text-shadow: 2px 2px 0 #8d4f00;
+        cursor: pointer;
+        transition: all 0.1s ease-in-out;
+      }
+
+      .clash-btn:active {
+        transform: translateY(6px);
+        box-shadow:
+          0 0px 0 #e65100,
+          0 6px 15px rgba(0, 0, 0, 0.4);
+      }
+
+      .results-box {
+        background: rgba(20, 30, 48, 0.85);
+        border: 2px solid #ffd700;
+        border-radius: 15px;
+        padding: 25px;
+        margin-top: 25px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.8);
+        display: none;
+      }
+
+      .optimized-msg {
+        display: none;
+        margin-top: 20px;
+        background: rgba(0, 255, 120, 0.2);
+        border: 2px solid #00ff88;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="bg-blur"></div>
+
+    <div class="container">
+      <h1>⚔️ Deck Optimizer</h1>
+      <p id="status" class="status-msg">Loading data...</p>
+
+      <div class="deck-panel">
+        <div class="card-grid" id="deckGrid"></div>
+      </div>
+
+      <button id="analyzeBtn" class="clash-btn">ANALYZE DECK SYNERGY</button>
+
+      <div id="optimizedMessage" class="optimized-msg"></div>
+
+      <div id="resultsArea" class="results-box">
+        <h3>Optimization Analysis</h3>
+        <p>
+          <strong>Weakest Link:</strong> <span id="weakestName"></span> (<span
+            id="weakestScore"
+          ></span
+          >)
+        </p>
+
+        <p>
+          <strong>Top Candidate:</strong>
+          <span id="replacementName"></span>
+          (<span id="replacementScore"></span>)
+        </p>
+
+        <button id="swapBtn" class="clash-btn">SWAP CARD & FINALIZE</button>
+      </div>
+
+      <h2 style="margin-top: 40px; text-shadow: 2px 2px #000">Select Cards</h2>
+      <div id="selectionPanel" class="selection-panel"></div>
+    </div>
+
+    <script>
+      let synergyMatrix = {};
+      let allCards = [];
+      let currentAnalysis = null;
+      let deckHistory = new Set();
+      let cardDict = {};
+
+      function getCurrentDeck() {
+        return Array.from(document.querySelectorAll(".card-slot"))
+          .map((s) => s.dataset.card)
+          .filter(Boolean);
+      }
+
+      function deckKey(deck) {
+        return [...deck].sort().join("|");
+      }
+
+      fetch("cards_i18n.json")
+        .then((res) => res.json())
+        .then((data) => {
+          data.forEach((card) => {
+            cardDict[card.name] = card.key;
+            allCards.push(card.name);
+          });
+          initDeckSlots();
+          initSelectionGrid();
+          document.getElementById("status").innerText = "Card Data Loaded";
+        });
+
+      fetch("synergy_datasetFinal.csv")
+        .then((res) => res.text())
+        .then((data) => {
+          parseCSV(data);
+          document.getElementById("analyzeBtn").disabled = false;
+        });
+
+      function initDeckSlots() {
+        const grid = document.getElementById("deckGrid");
+        for (let i = 0; i < 8; i++) {
+          const div = document.createElement("div");
+          div.className = "card-slot";
+          div.dataset.index = i;
+          div.innerHTML = `<span>Empty</span>`;
+
+          div.onclick = function () {
+            if (this.dataset.card) {
+              const removedCard = this.dataset.card;
+              this.innerHTML = `<span>Empty</span>`;
+              delete this.dataset.card;
+
+              document.querySelectorAll(".selection-card").forEach((card) => {
+                if (card.dataset.card === removedCard) {
+                  card.classList.remove("selected");
+                }
+              });
+            }
+          };
+          grid.appendChild(div);
+        }
+      }
+
+      function initSelectionGrid() {
+        const panel = document.getElementById("selectionPanel");
+        allCards.forEach((name) => {
+          const div = document.createElement("div");
+          div.className = "selection-card";
+          div.dataset.card = name;
+          div.innerHTML = `<img src="https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards/${cardDict[name]}.png">`;
+          div.onclick = () => assignCard(name);
+          panel.appendChild(div);
+        });
+      }
+
+      function assignCard(name) {
+        const slots = document.querySelectorAll(".card-slot");
+
+        for (let slot of slots) {
+          if (slot.dataset.card === name) {
+            alert("This card is already in your deck.");
+            return;
+          }
+        }
+
+        let emptySlot = null;
+        for (let slot of slots) {
+          if (!slot.dataset.card) {
+            emptySlot = slot;
+            break;
+          }
+        }
+
+        if (!emptySlot) {
+          alert("Deck is full! Remove a card first.");
+          return;
+        }
+
+        emptySlot.innerHTML = `
+          <img src="https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards/${cardDict[name]}.png">
+          <span>${name}</span>
+        `;
+        emptySlot.dataset.card = name;
+
+        document.querySelectorAll(".selection-card").forEach((card) => {
+          if (card.dataset.card === name) {
+            card.classList.add("selected");
+          }
+        });
+      }
+
+      function parseCSV(text) {
+        const lines = text.trim().split("\n");
+        const headers = lines[0].split(",").slice(1);
+        lines.slice(1).forEach((line) => {
+          const parts = line.split(",");
+          synergyMatrix[parts[0]] = {};
+          headers.forEach((col, i) => {
+            synergyMatrix[parts[0]][col] = parseFloat(parts[i + 1]) || 0;
+          });
+        });
+      }
+
+      document.getElementById("analyzeBtn").addEventListener("click", () => {
+        const currentDeck = getCurrentDeck();
+
+        if (currentDeck.length < 8) {
+          alert("Fill all 8 slots.");
+          return;
+        }
+
+        deckHistory.add(deckKey(currentDeck));
+
+        let weakestCard = "",
+          minScore = Infinity,
+          weakestIdx = -1;
+
+        currentDeck.forEach((card, i) => {
+          let score = 0;
+          currentDeck.forEach((other, j) => {
+            if (i !== j) score += synergyMatrix[card][other];
+          });
+          if (score < minScore) {
+            minScore = score;
+            weakestCard = card;
+            weakestIdx = i;
+          }
+        });
+
+        let bestRep = "",
+          maxRepScore = -Infinity;
+
+        const remaining = currentDeck.filter((_, i) => i !== weakestIdx);
+
+        allCards.forEach((candidate) => {
+          if (currentDeck.includes(candidate)) return;
+          let score = 0;
+          remaining.forEach(
+            (member) => (score += synergyMatrix[candidate]?.[member] || 0),
+          );
+          if (score > maxRepScore) {
+            maxRepScore = score;
+            bestRep = candidate;
+          }
+        });
+
+        if (maxRepScore <= minScore) {
+          const msg = document.getElementById("optimizedMessage");
+          msg.innerText = "✨ This deck is already perfectly optimized!";
+          msg.style.display = "block";
+          document.getElementById("resultsArea").style.display = "none";
+          return;
+        }
+
+        document.getElementById("optimizedMessage").style.display = "none";
+
+        document.getElementById("weakestName").innerText = weakestCard;
+        document.getElementById("weakestScore").innerText = minScore.toFixed(4);
+        document.getElementById("replacementName").innerText = bestRep;
+        document.getElementById("replacementScore").innerText =
+          maxRepScore.toFixed(4);
+        document.getElementById("resultsArea").style.display = "block";
+
+        currentAnalysis = { weakestIdx, bestRep };
+      });
+
+      document.getElementById("swapBtn").addEventListener("click", () => {
+        if (!currentAnalysis) return;
+
+        const slots = document.querySelectorAll(".card-slot");
+        const { weakestIdx, bestRep } = currentAnalysis;
+        const targetSlot = slots[weakestIdx];
+        const removedCard = targetSlot.dataset.card;
+
+        const newDeck = getCurrentDeck();
+        newDeck[weakestIdx] = bestRep;
+
+        if (deckHistory.has(deckKey(newDeck))) {
+          const msg = document.getElementById("optimizedMessage");
+          msg.innerText = "🏆 Best Optimized Possible Deck Achieved.";
+          msg.style.display = "block";
+          document.getElementById("resultsArea").style.display = "none";
+          return;
+        }
+
+        deckHistory.add(deckKey(newDeck));
+
+        document.querySelectorAll(".selection-card").forEach((card) => {
+          if (card.dataset.card === removedCard) {
+            card.classList.remove("selected");
+          }
+        });
+
+        targetSlot.innerHTML = `
+          <img src="https://raw.githubusercontent.com/RoyaleAPI/cr-api-assets/master/cards/${cardDict[bestRep]}.png">
+          <span>${bestRep}</span>
+        `;
+        targetSlot.dataset.card = bestRep;
+
+        document.querySelectorAll(".selection-card").forEach((card) => {
+          if (card.dataset.card === bestRep) {
+            card.classList.add("selected");
+          }
+        });
+
+        document.getElementById("resultsArea").style.display = "none";
+        alert("Swap Complete!");
+      });
+    </script>
+  </body>
+</html>

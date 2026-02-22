@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clash Royale Deck Intelligence</title>
+
+    <style>
+      /* Load Custom Clash Font */
+      @font-face {
+        font-family: "ClashRegular";
+        src: url("Clash_Regular.otf") format("opentype");
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        height: 100vh;
+        font-family: "ClashRegular", sans-serif;
+        background:
+          linear-gradient(rgba(10, 15, 30, 0.5), rgba(10, 15, 30, 0.5)),
+          url("wallpaper.jpeg") no-repeat center center/cover;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #ffffff;
+        overflow: hidden;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .container {
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(12px);
+        padding: 50px 70px;
+        border-radius: 30px;
+        text-align: center;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+        width: 90%;
+        max-width: 800px;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        animation: fadeInUp 1s ease forwards;
+      }
+
+      /* Heading Logo Replacement */
+      .logo {
+        width: 100%;
+        max-width: 450px;
+        margin-bottom: 20px;
+        filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.5));
+      }
+
+      .subtitle {
+        font-size: 20px;
+        margin-bottom: 40px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        opacity: 0.9;
+        line-height: 1.4;
+      }
+
+      .button-group {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+      }
+
+      /* Clash Royale Styled Button */
+      .cr-button {
+        position: relative;
+        padding: 20px;
+        font-family: "ClashRegular", sans-serif;
+        font-size: 24px;
+        text-transform: uppercase;
+        color: white;
+        background: linear-gradient(180deg, #ffcc00 0%, #ff9900 100%);
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        /* The thick blue 3D bottom border */
+        box-shadow:
+          0 12px 20px rgba(0, 0, 0, 0.5);
+        transition: all 0.1s ease;
+        text-shadow: 2px 2px 0px #8b4513; /* Brownish text shadow for depth */
+      }
+
+      .cr-button:hover {
+        background: linear-gradient(180deg, #ffe066 0%, #ffb84d 100%);
+        transform: translateY(-2px);
+        box-shadow:
+          0 15px 25px rgba(0, 0, 0, 0.6);
+      }
+
+      .cr-button:active {
+        transform: translateY(6px);
+        box-shadow:
+          0 2px 0 #1a4a9e,
+          0 5px 10px rgba(0, 0, 0, 0.5);
+      }
+
+      .footer {
+        margin-top: 40px;
+        font-size: 14px;
+        opacity: 0.6;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+
+      /* Spark Background Elements */
+      .spark {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: gold;
+        border-radius: 50%;
+        filter: blur(1px);
+        animation: float 3s infinite ease-in-out;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.3;
+        }
+        50% {
+          transform: translateY(-20px);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="spark" style="top: 10%; left: 20%; animation-delay: 0.5s"></div>
+    <div class="spark" style="top: 80%; left: 10%; animation-delay: 1.2s"></div>
+    <div class="spark" style="top: 50%; left: 90%; animation-delay: 0.8s"></div>
+
+    <div class="container">
+      <img src="logo.png" alt="Clash Royale" class="logo" />
+
+
+     <div class="button-group">
+        <button class="cr-button" onclick="window.location.href='http://localhost:8501/'">
+            Winner Prediction
+        </button>
+
+        <button class="cr-button" onclick="window.location.href='analytics.html'">
+            Card-Level Analytics
+        </button>
+
+        <button class="cr-button" onclick="window.location.href='counter.html'">
+            Counter-Deck Prediction
+        </button>
+    </div>
+
+    </div>
+  </body>
+</html>
