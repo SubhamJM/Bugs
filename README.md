@@ -62,6 +62,10 @@ A sleek, modern UI built with Streamlit and custom HTML/CSS for smooth model int
 
 Want to run this locally? Follow these steps:
 
+Deployed website : https://t9njqdlx7nopitkt8xppnf.streamlit.app/
+
+OR
+
 1. **Clone the repository:**
    ```bash
    git clone [https://github.com/yourusername/clash-royale-ai.git](https://github.com/yourusername/clash-royale-ai.git)
