@@ -536,11 +536,37 @@ if st.session_state.editing_player is None:
         st.markdown("---")
         if st.button("🔮 PREDICT WINNER", use_container_width=True, type="primary"):
             if len(st.session_state.deck1) == 8 and len(st.session_state.deck2) == 8:
-                st.balloons()
-                st.success("Analysis Complete: Player 1 has a 64% Win Probability!")
+                if not TF_AVAILABLE or oracle_model is None or card_to_idx is None:
+                    st.error("⚠️ Model not loaded! Please check your .keras and .pkl files.")
+                else:
+                    with st.spinner("Analyzing matchup using Deep Learning..."):
+                        # 1. Get raw numeric IDs from the card names
+                        p1_ids = [name_to_id[name] for name in st.session_state.deck1]
+                        p2_ids = [name_to_id[name] for name in st.session_state.deck2]
+                        
+                        # 2. Map the raw IDs to the model's 0-109 indices safely
+                        p1_mapped = [card_to_idx.get(c, 0) if c > 500 else c for c in p1_ids]
+                        p2_mapped = [card_to_idx.get(c, 0) if c > 500 else c for c in p2_ids]
+                        
+                        # 3. Convert to Neural Network tensor batches (Shape: 1x8)
+                        p1_batch = np.array([p1_mapped], dtype=np.int32)
+                        p2_batch = np.array([p2_mapped], dtype=np.int32)
+                        
+                        # 4. Make the Live Prediction!
+                        # The model predicts the probability of Player 2 winning. 
+                        # So Player 1's win probability is (1 - prediction).
+                        prediction = oracle_model.predict([p1_batch, p2_batch], verbose=0).flatten()[0]
+                        
+                        p2_win_prob = prediction * 100
+                        p1_win_prob = (1 - prediction) * 100
+                        
+                        st.balloons()
+                        if p1_win_prob > p2_win_prob:
+                            st.success(f"🏆 **Analysis Complete:** Player 1 has the advantage with a **{p1_win_prob:.1f}%** Win Probability!")
+                        else:
+                            st.success(f"🏆 **Analysis Complete:** Player 2 has the advantage with a **{p2_win_prob:.1f}%** Win Probability!")
             else:
                 st.error("⚠️ Both players must have exactly 8 cards in their deck before predicting!")
-                
     # ---------------- TAB 2 ----------------
     with tab_counter:
         st.markdown("<h2 style='text-align: center; color: #ffd700; text-shadow: 2px 2px #000;'>🛡️ The Anti-Meta Engine</h2>", unsafe_allow_html=True)
